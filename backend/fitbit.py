@@ -2,6 +2,8 @@ import fitbit as fitbit
 import requests
 from config import CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, AUTH_URL, TOKEN_URL
 from datetime import datetime, timedelta
+import pandas as pd
+
 
 
 
@@ -44,7 +46,7 @@ def fetch_activity_data(access_token):
     end_date_str = end_date.strftime('%Y-%m-%d')
 
     # Corrected URL format
-    period = '7d'
+    period = '3m'
     activity_url = f"https://api.fitbit.com/1/user/-/activities/active-zone-minutes/date/today/{period}.json"
     headers = {'Authorization': f'Bearer {access_token}'}
     activity_response = requests.get(activity_url, headers=headers)
@@ -54,3 +56,13 @@ def fetch_activity_data(access_token):
 activity_data = fetch_activity_data(access_token)
 print(activity_data)
 
+# Extracting 'activities-active-zone-minutes' and converting each 'value' into a DataFrame row
+activity_values = [entry['value'] for entry in activity_data['activities-active-zone-minutes']]
+df = pd.DataFrame(activity_values)
+
+# Adding 'dateTime' as a column in the DataFrame
+date_times = [entry['dateTime'] for entry in activity_data['activities-active-zone-minutes']]
+df['dateTime'] = date_times
+
+# Save the DataFrame to a CSV file
+df.to_csv('output/activity_data.csv', index=False)
